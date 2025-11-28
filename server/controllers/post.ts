@@ -1,31 +1,48 @@
 import Post from "../models/post.schema.ts";
 import type { Request, Response } from "express";
-import { grpcSuccessResponse, grpcErrorResponse } from "../utils/response.ts";
+import {
+  successResponse,
+  errorResponse,
+  validationErrorResponse,
+} from "../utils/response.ts";
+import { extractMongooseValidationErrors } from "../utils/validation.ts";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
 export const getPosts = async (req: Request, res: Response) => {
   try {
     const posts = await Post.find();
-    res
-      .status(HTTP_STATUS.OK)
-      .json(grpcSuccessResponse(posts, Message.PostFound));
+    res.status(HTTP_STATUS.OK).json(successResponse(posts, Message.PostFound));
   } catch (error) {
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(grpcErrorResponse(Message.PostNotFound));
+      .json(errorResponse(Message.PostNotFound));
   }
 };
 export const createPost = async (req: Request, res: Response) => {
   const post = req.body;
   const newPost = new Post(post);
+
   try {
+    await newPost.validate();
     await newPost.save();
     res
       .status(HTTP_STATUS.CREATED)
-      .json(grpcSuccessResponse(newPost, Message.PostCreated));
-  } catch (error) {
+      .json(successResponse(newPost, Message.PostCreated));
+  } catch (error: any) {
+    if (error.name === "ValidationError") {
+      const validationErrors = extractMongooseValidationErrors(error);
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          validationErrorResponse(
+            "Dữ liệu bài viết không hợp lệ.",
+            validationErrors
+          )
+        );
+      return;
+    }
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(grpcErrorResponse(Message.PostNotCreated));
+      .json(errorResponse(Message.PostNotCreated));
   }
 };
 export const updatePost = async (req: Request, res: Response) => {
@@ -36,12 +53,12 @@ export const updatePost = async (req: Request, res: Response) => {
     if (updatedPost) {
       res
         .status(HTTP_STATUS.OK)
-        .json(grpcSuccessResponse(updatedPost, Message.PostUpdated));
+        .json(successResponse(updatedPost, Message.PostUpdated));
     }
   } catch (error) {
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(grpcErrorResponse(Message.PostNotUpdated));
+      .json(errorResponse(Message.PostNotUpdated));
   }
 };
 
