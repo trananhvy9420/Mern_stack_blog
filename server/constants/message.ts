@@ -1,4 +1,5 @@
 export const Message = {
+  PostFound: "Post found",
   PostNotFound: "Post not found",
   PostCreated: "Post created successfully",
   PostUpdated: "Post updated successfully",
