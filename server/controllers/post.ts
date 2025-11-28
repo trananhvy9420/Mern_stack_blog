@@ -1,4 +1,4 @@
-import Post from "../models/post.schema.js";
+import Post from "../models/post.schema.ts";
 import type { Request, Response } from "express";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
 export const getPosts = async (req: Request, res: Response) => {
