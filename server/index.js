@@ -3,14 +3,24 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-
+import posts from "./router/post.js";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const URI = process.env.MONGO_URI;
 app.use(bodyParser.json({ limit: "30mb" }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
+mongoose
+  .connect(URI, {})
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.log("Error connecting to MongoDB", err);
+  });
+app.use("/posts", posts);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
