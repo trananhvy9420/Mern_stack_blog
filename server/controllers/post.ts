@@ -1,6 +1,6 @@
 import Post from "../models/post.schema.ts";
 import type { Request, Response } from "express";
-import { grpcSuccessResponse } from "../utils/response.ts";
+import { grpcSuccessResponse, grpcErrorResponse } from "../utils/response.ts";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
 export const getPosts = async (req: Request, res: Response) => {
   try {
@@ -11,7 +11,7 @@ export const getPosts = async (req: Request, res: Response) => {
   } catch (error) {
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: Message.PostNotFound });
+      .json(grpcErrorResponse(Message.PostNotFound));
   }
 };
 export const createPost = async (req: Request, res: Response) => {
@@ -25,7 +25,7 @@ export const createPost = async (req: Request, res: Response) => {
   } catch (error) {
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: Message.PostNotCreated });
+      .json(grpcErrorResponse(Message.PostNotCreated));
   }
 };
 export const updatePost = async (req: Request, res: Response) => {
@@ -37,13 +37,11 @@ export const updatePost = async (req: Request, res: Response) => {
       res
         .status(HTTP_STATUS.OK)
         .json(grpcSuccessResponse(updatedPost, Message.PostUpdated));
-    } else {
-      res.status(HTTP_STATUS.NOT_FOUND).json({ message: Message.PostNotFound });
     }
   } catch (error) {
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: Message.PostNotUpdated });
+      .json(grpcErrorResponse(Message.PostNotUpdated));
   }
 };
 

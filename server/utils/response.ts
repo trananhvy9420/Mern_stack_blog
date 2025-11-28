@@ -5,3 +5,9 @@ export function grpcSuccessResponse<T>(data: T, message = "Success"): any {
     data,
   };
 }
+export function grpcErrorResponse(message: string): any {
+  return {
+    success: false,
+    message,
+  };
+}
