@@ -1,8 +1,13 @@
 import express from "express";
-import { getPosts, createPost, updatePost } from "../controllers/post.ts";
+import {
+  getPosts,
+  createPost,
+  updatePost,
+  seedData,
+} from "../controllers/post.ts";
 
 const router = express.Router();
 router.route("/").get(getPosts).post(createPost);
 router.route("/:id").patch(updatePost);
-
+router.route("/seed-data").get(seedData);
 export default router;

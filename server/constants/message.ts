@@ -7,4 +7,8 @@ export const Message = {
   PostNotDeleted: "Post not deleted",
   PostNotUpdated: "Post not updated",
   PostNotCreated: "Post not created",
+  UserFound: "User found",
+  UserNotFound: "User not found",
+  UserCreated: "User created successfully",
+  InternalServerError: "Internal server error",
 };

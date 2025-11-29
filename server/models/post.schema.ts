@@ -6,6 +6,8 @@ interface IPost extends mongoose.Document {
   author: string;
   attachment: string;
   likeCount: number;
+  comments: mongoose.Types.ObjectId[] | any[];
+  users: mongoose.Types.ObjectId[] | any[];
 }
 const postSchema = new Schema(
   {
@@ -27,6 +29,18 @@ const postSchema = new Schema(
       type: Number,
       default: 0,
     },
+    comments: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
+    users: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

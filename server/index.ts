@@ -3,7 +3,8 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import posts from "./router/post.ts";
+import posts from "./router/post.route.ts";
+import users from "./router/user.route.ts";
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,7 @@ mongoose
     console.log("Error connecting to MongoDB", err);
   });
 app.use("/posts", posts);
+app.use("/users", users);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
