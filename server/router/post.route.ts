@@ -7,6 +7,6 @@ import {
 
 const router = express.Router();
 router.route("/").get(postController.getPosts).post(postController.createPost);
-router.route("/:id").patch(updatePost);
+router.route("/:id").patch(updatePost).post(postController.getDetailPost);
 router.route("/seed-data").get(seedData);
 export default router;

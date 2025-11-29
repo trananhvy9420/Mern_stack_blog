@@ -139,4 +139,28 @@ export const postController = {
         .json(errorResponse(Message.PostNotCreated));
     }
   },
+  getDetailPost: async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const post = await Post.findById(id).populate({
+        path: "comments",
+        select: "content createdAt",
+        populate: {
+          path: "userId",
+          select: "username email profilePicture",
+        },
+      });
+      if (!post) {
+        res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(errorResponse(Message.PostNotFound));
+        return;
+      }
+      res.status(HTTP_STATUS.OK).json(successResponse(post, Message.PostFound));
+    } catch (error) {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ message: "Internal Server Error", error: error });
+    }
+  },
 };
