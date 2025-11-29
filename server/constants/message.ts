@@ -19,4 +19,6 @@ export const Message = {
   CommentNotDeleted: "Comment not deleted",
   CommentNotUpdated: "Comment not updated",
   CommentNotCreated: "Comment not created",
+  USER_ALREADY_EXISTS: "User already exists",
+  USER_REGISTERED_SUCCESSFULLY: "User registered successfully",
 };

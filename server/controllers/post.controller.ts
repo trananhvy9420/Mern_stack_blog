@@ -10,38 +10,6 @@ import { extractMongooseValidationErrors } from "../utils/validation.ts";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
 import User from "../models/user.schema.ts";
 import Comment from "../models/comment.schema.ts";
-export const getPosts = async (req: Request, res: Response) => {
-  try {
-    const { title, author, content } = req.query;
-    let filter: Record<string, Object> = {};
-    if (title) {
-      filter.title = { $regex: title, $options: "i" };
-    }
-    if (author) {
-      filter.author = { $regex: author, $options: "i" };
-    }
-    if (content) {
-      filter.content = { $regex: content, $options: "i" };
-    }
-    const populateOptions = {
-      path: "comments",
-      select: "content createdAt",
-      populate: {
-        path: "userId",
-        select: "username email profilePicture",
-      },
-    };
-    const posts = await getPaginatedData(Post, req.query, filter, {
-      populate: populateOptions,
-    });
-    res.status(HTTP_STATUS.OK).json(successResponse(posts, Message.PostFound));
-  } catch (error) {
-    console.log(error);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorResponse(Message.PostNotFound));
-  }
-};
 export const seedData = async (req: Request, res: Response) => {
   try {
     // 1. Xóa dữ liệu cũ (Tùy chọn - để tránh rác database)
@@ -100,33 +68,6 @@ export const seedData = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Lỗi khi tạo dữ liệu", details: error });
   }
 };
-export const createPost = async (req: Request, res: Response) => {
-  const post = req.body;
-  const newPost = new Post(post);
-  try {
-    await newPost.validate();
-    await newPost.save();
-    res
-      .status(HTTP_STATUS.CREATED)
-      .json(successResponse(newPost, Message.PostCreated));
-  } catch (error: any) {
-    if (error.name === "ValidationError") {
-      const validationErrors = extractMongooseValidationErrors(error);
-      res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(
-          validationErrorResponse(
-            "Dữ liệu bài viết không hợp lệ.",
-            validationErrors
-          )
-        );
-      return;
-    }
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorResponse(Message.PostNotCreated));
-  }
-};
 export const updatePost = async (req: Request, res: Response) => {
   const { id } = req.params;
   const post = req.body;
@@ -143,8 +84,59 @@ export const updatePost = async (req: Request, res: Response) => {
       .json(errorResponse(Message.PostNotUpdated));
   }
 };
-
-// export const createPost = (req, res) => {
-//   // Logic to create a new post in the database
-//   res.send("Create a new post");
-// };
+export const postController = {
+  getPosts: async (req: Request, res: Response) => {
+    try {
+      const { title, author, content } = req.query;
+      let filter: Record<string, Object> = {};
+      if (title) filter.title = { $regex: title, $options: "i" };
+      if (author) filter.author = { $regex: author, $options: "i" };
+      if (content) filter.content = { $regex: content, $options: "i" };
+      const populateOptions = {
+        path: "comments",
+        select: "content createdAt",
+        populate: {
+          path: "userId",
+          select: "username email profilePicture",
+        },
+      };
+      const posts = await getPaginatedData(Post, req.query, filter, {
+        populate: populateOptions,
+      });
+      res
+        .status(HTTP_STATUS.OK)
+        .json(successResponse(posts, Message.PostFound));
+    } catch (error) {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(errorResponse(Message.PostNotFound));
+    }
+  },
+  createPost: async (req: Request, res: Response) => {
+    const post = req.body;
+    const newPost = new Post(post);
+    try {
+      await newPost.validate();
+      await newPost.save();
+      res
+        .status(HTTP_STATUS.CREATED)
+        .json(successResponse(newPost, Message.PostCreated));
+    } catch (error) {
+      if (error.name === "ValidationError") {
+        const validationErrors = extractMongooseValidationErrors(error);
+        res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(
+            validationErrorResponse(
+              "Dữ liệu bài viết không hợp lệ.",
+              validationErrors
+            )
+          );
+        return;
+      }
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(errorResponse(Message.PostNotCreated));
+    }
+  },
+};
