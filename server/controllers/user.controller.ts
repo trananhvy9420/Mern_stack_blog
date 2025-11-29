@@ -6,7 +6,6 @@ import {
   validationErrorResponse,
 } from "../utils/response.ts";
 import { getPaginatedData } from "../utils/paginationHelper.ts";
-import { extractMongooseValidationErrors } from "../utils/validation.ts";
 import { HTTP_STATUS, Message } from "../constants/index.ts";
 
 export const getUsers = async (req: Request, res: Response) => {

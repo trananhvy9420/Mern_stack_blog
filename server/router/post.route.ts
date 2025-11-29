@@ -4,7 +4,7 @@ import {
   createPost,
   updatePost,
   seedData,
-} from "../controllers/post.ts";
+} from "../controllers/post.controller.ts";
 
 const router = express.Router();
 router.route("/").get(getPosts).post(createPost);

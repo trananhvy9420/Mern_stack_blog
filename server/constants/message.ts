@@ -11,4 +11,12 @@ export const Message = {
   UserNotFound: "User not found",
   UserCreated: "User created successfully",
   InternalServerError: "Internal server error",
+  CommentFound: "Comment found",
+  CommentNotFound: "Comment not found",
+  CommentCreated: "Comment created successfully",
+  CommentUpdated: "Comment updated successfully",
+  CommentDeleted: "Comment deleted successfully",
+  CommentNotDeleted: "Comment not deleted",
+  CommentNotUpdated: "Comment not updated",
+  CommentNotCreated: "Comment not created",
 };
