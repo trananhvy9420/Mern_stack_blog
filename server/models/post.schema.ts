@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
-
+interface IPost extends mongoose.Document {
+  title: string;
+  content: string;
+  author: string;
+  attachment: string;
+  likeCount: number;
+}
 const postSchema = new Schema(
   {
     title: {
@@ -25,6 +31,6 @@ const postSchema = new Schema(
   { timestamps: true }
 );
 
-const Post = mongoose.model("Post", postSchema);
+const Post = mongoose.model<IPost>("Post", postSchema);
 
 export default Post;

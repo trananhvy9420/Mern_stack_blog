@@ -5,11 +5,24 @@ import {
   errorResponse,
   validationErrorResponse,
 } from "../utils/response.ts";
+import { getPaginatedData } from "../utils/paginationHelper.ts";
 import { extractMongooseValidationErrors } from "../utils/validation.ts";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
+
 export const getPosts = async (req: Request, res: Response) => {
   try {
-    const posts = await Post.find();
+    const { title, author, content } = req.query;
+    let filter: any = {};
+    if (title) {
+      filter.title = { $regex: title, $options: "i" };
+    }
+    if (author) {
+      filter.author = { $regex: author, $options: "i" };
+    }
+    if (content) {
+      filter.content = { $regex: content, $options: "i" };
+    }
+    const posts = await getPaginatedData(Post, req.query, filter);
     res.status(HTTP_STATUS.OK).json(successResponse(posts, Message.PostFound));
   } catch (error) {
     res
