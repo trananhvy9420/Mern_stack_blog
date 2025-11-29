@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import posts from "./router/post.route.ts";
 import users from "./router/user.route.ts";
+import auths from "./router/auth.route.ts";
 dotenv.config();
 
 const app = express();
@@ -23,6 +24,7 @@ mongoose
   });
 app.use("/posts", posts);
 app.use("/users", users);
+app.get("/auth", auths);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
