@@ -7,13 +7,14 @@ import {
 } from "../utils/response.ts";
 import { getPaginatedData } from "../utils/paginationHelper.ts";
 import { HTTP_STATUS, Message } from "../constants/index.ts";
+import { extractMongooseValidationErrors } from "../utils/validation.ts";
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    const { name, email } = req.query;
+    const { username, email } = req.query;
     let filter: Record<string, Object> = {};
-    if (name) {
-      filter.name = { $regex: name, $options: "i" };
+    if (username) {
+      filter.username = { $regex: username, $options: "i" };
     }
     if (email) {
       filter.email = { $regex: email, $options: "i" };
@@ -21,6 +22,35 @@ export const getUsers = async (req: Request, res: Response) => {
     const users = await getPaginatedData(User, req.query, filter);
     res.status(HTTP_STATUS.OK).json(successResponse(users, Message.UserFound));
   } catch (error) {
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(errorResponse(Message.InternalServerError));
+  }
+};
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { username, email, password, profilePicture } = req.body;
+    const newUser = await User.create({
+      username,
+      email,
+      password,
+      profilePicture,
+    });
+    res
+      .status(HTTP_STATUS.CREATED)
+      .json(successResponse(newUser, Message.UserCreated));
+  } catch (error: any) {
+    if (error.name === "ValidationError") {
+      const validationErrors = extractMongooseValidationErrors(error);
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          validationErrorResponse(
+            "Dữ liệu bài viết không hợp lệ.",
+            validationErrors
+          )
+        );
+    }
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(errorResponse(Message.InternalServerError));
