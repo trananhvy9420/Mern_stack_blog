@@ -6,6 +6,7 @@ export interface IUser extends mongoose.Document {
   password: string;
   profilePicture: string;
   bio: string;
+  refresh_token: string;
 }
 const userSchema = new Schema(
   {
@@ -24,6 +25,10 @@ const userSchema = new Schema(
       required: true,
     },
     profilePicture: {
+      type: String,
+      default: "",
+    },
+    refresh_token: {
       type: String,
       default: "",
     },

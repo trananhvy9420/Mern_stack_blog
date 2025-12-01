@@ -21,4 +21,7 @@ export const Message = {
   CommentNotCreated: "Comment not created",
   USER_ALREADY_EXISTS: "User already exists",
   USER_REGISTERED_SUCCESSFULLY: "User registered successfully",
+  LOGIN_SUCCESS: "Login successful",
+  INVALID_CREDENTIALS: "Invalid credentials",
+  WRONG_LOGIN: "Email hoặc mật khẩu không chính xác",
 };
