@@ -69,53 +69,23 @@ export const seedData = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Lỗi khi tạo dữ liệu", details: error });
   }
 };
-export const updatePost = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const post = req.body;
-  try {
-    const updatedPost = await Post.findByIdAndUpdate(id, post, { new: true });
-    if (updatedPost) {
-      res
-        .status(HTTP_STATUS.OK)
-        .json(successResponse(updatedPost, Message.PostUpdated));
-    }
-  } catch (error) {
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(errorResponse(Message.PostNotUpdated));
-  }
-};
 export const postController = {
   getPosts: async (req: Request, res: Response) => {
     try {
-      // --- BƯỚC 1: TẠO CACHE KEY DỰA TRÊN QUERY PARAM ---
-      // Biến object query thành chuỗi string để làm key định danh duy nhất
-      // Ví dụ key sẽ là: "posts:{"page":"1","limit":"10","title":"hello"}"
       const cacheKey = `posts:${JSON.stringify(req.query)}`;
-
-      // --- BƯỚC 2: KIỂM TRA REDIS ---
       const cachedData = await redisClient.get(cacheKey);
-
       if (cachedData) {
-        // HIT: Có dữ liệu trong Redis -> Trả về ngay
-        console.log("⚡ Lấy danh sách Post từ REDIS");
-        // return để kết thúc hàm luôn, không chạy xuống dưới nữa
         return res
           .status(HTTP_STATUS.OK)
           .json(
             successResponse(JSON.parse(cachedData), "Lấy từ Redis thành công")
           );
       }
-
-      // --- BƯỚC 3: NẾU KHÔNG CÓ -> GỌI MONGODB (Code cũ của bạn) ---
-      console.log("🐢 Lấy danh sách Post từ MONGODB");
-
       const { title, author, content } = req.query;
       let filter: Record<string, Object> = {};
       if (title) filter.title = { $regex: title, $options: "i" };
       if (author) filter.author = { $regex: author, $options: "i" };
       if (content) filter.content = { $regex: content, $options: "i" };
-
       const populateOptions = {
         path: "comments",
         select: "content createdAt",
@@ -124,18 +94,10 @@ export const postController = {
           select: "username email profilePicture",
         },
       };
-
       const posts = await getPaginatedData(Post, req.query, filter, {
         populate: populateOptions,
       });
-
-      // --- BƯỚC 4: LƯU KẾT QUẢ VÀO REDIS ---
-      // Lưu vào Redis với thời gian hết hạn (TTL) là 60 giây
-      // Để đảm bảo dữ liệu không bị cũ quá lâu
-      await redisClient.set(cacheKey, JSON.stringify(posts), {
-        EX: 60,
-      });
-
+      await redisClient.set(cacheKey, JSON.stringify(posts), {});
       res
         .status(HTTP_STATUS.OK)
         .json(successResponse(posts, Message.PostFound));
@@ -151,12 +113,24 @@ export const postController = {
     try {
       await newPost.validate();
       await newPost.save();
+      try {
+        console.log("Đang xóa cache danh sách bài viết....");
+        const keys = await redisClient.keys("posts:*");
+        console.log("🔍 Keys tìm thấy trong Redis:", keys);
+        if (keys.length > 0) {
+          await redisClient.del(keys);
+          console.log(`✅ Đã xóa ${keys.length} key cache cũ.`);
+        }
+      } catch (error) {
+        console.error("Lỗi khi xóa cache redis:", error);
+      }
       res
         .status(HTTP_STATUS.CREATED)
         .json(successResponse(newPost, Message.PostCreated));
     } catch (error) {
-      if (error.name === "ValidationError") {
-        const validationErrors = extractMongooseValidationErrors(error);
+      const err = error as any;
+      if (err.name === "ValidationError") {
+        const validationErrors = extractMongooseValidationErrors(err);
         res
           .status(HTTP_STATUS.BAD_REQUEST)
           .json(

@@ -9,6 +9,8 @@ services:
       - "6379:6379" # Mở cổng 6379 để server kết nối vào
     volumes:
       - redis_data:/data # Lưu dữ liệu để tắt đi bật lại không mất
-
+    env_file:
+      - .env
+    command: redis-server --requirepass ${REDIS_PASSWORD} # Sử dụng biến môi trường từ file .env.dev
 volumes:
   redis_data:

@@ -130,4 +130,21 @@ export const authController = {
         .json(errorResponse("Invalid or Expired Refresh Token"));
     }
   },
+  getMe: async (req: Request, res: Response) => {
+    try {
+      const user = await User.findById((req as any).user.id).select(
+        "-password"
+      );
+      if (!user) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(errorResponse(Message.UserNotFound));
+      }
+      res.status(HTTP_STATUS.OK).json(successResponse(user, "User Profile"));
+    } catch (error) {
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(errorResponse(Message.InternalServerError));
+    }
+  },
 };

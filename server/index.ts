@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import redisClient from "./config/redis.ts";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import posts from "./router/post.route.ts";
@@ -14,15 +15,14 @@ const PORT = process.env.PORT || 5000;
 const URI = (process.env.MONGO_URI as String).toString();
 app.use(bodyParser.json({ limit: "30mb" }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
-app.use(cors());
-mongoose
-  .connect(URI, {})
-  .then(() => {
-    console.log("Connected to MongoDB");
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
   })
-  .catch((err) => {
-    console.log("Error connecting to MongoDB", err);
-  });
+);
+// mongoose connection removed (handled in startServer)
 const startServer = async () => {
   try {
     // --- KẾT NỐI MONGODB (Của bạn có sẵn rồi) ---
@@ -33,8 +33,8 @@ const startServer = async () => {
     await redisClient.connect();
     // Lưu ý: Phải await nó kết nối xong thì mới dùng được
 
-    app.listen(3000, () => {
-      console.log("Server is running on port 3000");
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Lỗi khởi động server:", error);
@@ -48,4 +48,4 @@ app.use("/auth", auth);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Duplicate app.listen removed
