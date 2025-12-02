@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  # Service Redis
+  redis:
+    image: redis:alpine
+    container_name: my_redis_dev
+    ports:
+      - "6379:6379" # Mở cổng 6379 để server kết nối vào
+    volumes:
+      - redis_data:/data # Lưu dữ liệu để tắt đi bật lại không mất
+
+volumes:
+  redis_data:

@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
+import redisClient from "./config/redis.ts";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -22,6 +23,25 @@ mongoose
   .catch((err) => {
     console.log("Error connecting to MongoDB", err);
   });
+const startServer = async () => {
+  try {
+    // --- KẾT NỐI MONGODB (Của bạn có sẵn rồi) ---
+    await mongoose.connect(process.env.MONGO_URI as string);
+    console.log("🐢 MongoDB Connected");
+
+    // --- KẾT NỐI REDIS (Thêm đoạn này) ---
+    await redisClient.connect();
+    // Lưu ý: Phải await nó kết nối xong thì mới dùng được
+
+    app.listen(3000, () => {
+      console.log("Server is running on port 3000");
+    });
+  } catch (error) {
+    console.error("Lỗi khởi động server:", error);
+  }
+};
+
+startServer();
 app.use("/posts", posts);
 app.use("/users", users);
 app.use("/auth", auth);

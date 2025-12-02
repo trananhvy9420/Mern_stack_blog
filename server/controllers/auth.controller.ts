@@ -75,7 +75,6 @@ export const authController = {
         .json(errorResponse(Message.InternalServerError));
     }
   },
-
   refreshToken: async (req: Request, res: Response) => {
     // Get token from Cookie
     const refresh_token = req.cookies?.refresh_token;

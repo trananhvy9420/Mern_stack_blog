@@ -10,6 +10,7 @@ import { extractMongooseValidationErrors } from "../utils/validation.ts";
 import { Message, HTTP_STATUS } from "../constants/index.ts";
 import User from "../models/user.schema.ts";
 import Comment from "../models/comment.schema.ts";
+import redisClient from "../config/redis.ts";
 export const seedData = async (req: Request, res: Response) => {
   try {
     // 1. Xóa dữ liệu cũ (Tùy chọn - để tránh rác database)
@@ -87,11 +88,34 @@ export const updatePost = async (req: Request, res: Response) => {
 export const postController = {
   getPosts: async (req: Request, res: Response) => {
     try {
+      // --- BƯỚC 1: TẠO CACHE KEY DỰA TRÊN QUERY PARAM ---
+      // Biến object query thành chuỗi string để làm key định danh duy nhất
+      // Ví dụ key sẽ là: "posts:{"page":"1","limit":"10","title":"hello"}"
+      const cacheKey = `posts:${JSON.stringify(req.query)}`;
+
+      // --- BƯỚC 2: KIỂM TRA REDIS ---
+      const cachedData = await redisClient.get(cacheKey);
+
+      if (cachedData) {
+        // HIT: Có dữ liệu trong Redis -> Trả về ngay
+        console.log("⚡ Lấy danh sách Post từ REDIS");
+        // return để kết thúc hàm luôn, không chạy xuống dưới nữa
+        return res
+          .status(HTTP_STATUS.OK)
+          .json(
+            successResponse(JSON.parse(cachedData), "Lấy từ Redis thành công")
+          );
+      }
+
+      // --- BƯỚC 3: NẾU KHÔNG CÓ -> GỌI MONGODB (Code cũ của bạn) ---
+      console.log("🐢 Lấy danh sách Post từ MONGODB");
+
       const { title, author, content } = req.query;
       let filter: Record<string, Object> = {};
       if (title) filter.title = { $regex: title, $options: "i" };
       if (author) filter.author = { $regex: author, $options: "i" };
       if (content) filter.content = { $regex: content, $options: "i" };
+
       const populateOptions = {
         path: "comments",
         select: "content createdAt",
@@ -100,9 +124,18 @@ export const postController = {
           select: "username email profilePicture",
         },
       };
+
       const posts = await getPaginatedData(Post, req.query, filter, {
         populate: populateOptions,
       });
+
+      // --- BƯỚC 4: LƯU KẾT QUẢ VÀO REDIS ---
+      // Lưu vào Redis với thời gian hết hạn (TTL) là 60 giây
+      // Để đảm bảo dữ liệu không bị cũ quá lâu
+      await redisClient.set(cacheKey, JSON.stringify(posts), {
+        EX: 60,
+      });
+
       res
         .status(HTTP_STATUS.OK)
         .json(successResponse(posts, Message.PostFound));
